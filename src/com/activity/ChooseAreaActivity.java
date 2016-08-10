@@ -14,7 +14,10 @@ import android.R.integer;
 import android.app.Activity;
 import android.app.DownloadManager.Query;
 import android.app.ProgressDialog;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -52,8 +55,21 @@ public class ChooseAreaActivity extends Activity {
 
 	private int currentLevel;
 
+	private boolean isFromWeatherActivity;
+	
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		isFromWeatherActivity = getIntent().getBooleanExtra("from_weather_activity", false);
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+	
+		if(prefs.getBoolean("city_selected", false) && !isFromWeatherActivity)
+		{
+			Intent intent = new Intent(this,WeatherActivity.class);
+			startActivity(intent);
+			finish();
+			return;
+		}
+		
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.area);
 		listView = (ListView) findViewById(R.id.list_view1);
@@ -75,6 +91,12 @@ public class ChooseAreaActivity extends Activity {
 
 					selectedCity = cityList.get(position);
 					queryCounties();
+				}else if (currentLevel == LEVEL_COUNTY) {
+					String countyCode = countyList.get(position).getCountyCode();
+					Intent intent = new Intent(ChooseAreaActivity.this,WeatherActivity.class);
+					intent.putExtra("county_code", countyCode);
+					startActivity(intent);
+					finish();
 				}
 			}
 		});
@@ -179,12 +201,7 @@ public class ChooseAreaActivity extends Activity {
 				runOnUiThread(new Runnable() {
 					public void run() {
 						closeProgressDialog();
-						System.out.print(e.getMessage());
-						Log.e("aaa", e.getMessage());
-						Toast.makeText(getBaseContext(),
-								"º”‘ÿ ß∞‹" + e.getMessage(), Toast.LENGTH_LONG)
-								.show();
-
+						Toast.makeText(ChooseAreaActivity.this,"º”‘ÿ ß∞‹", Toast.LENGTH_SHORT).show();
 					}
 				});
 			}
@@ -212,7 +229,11 @@ public class ChooseAreaActivity extends Activity {
 			queryCities();
 		} else if (currentLevel == LEVEL_CITY) {
 			queryProvinces();
-		} else {
+		}else if (isFromWeatherActivity) {
+			Intent intent = new Intent(this,WeatherActivity.class);
+			startActivity(intent);
+		} 
+		else {
 			finish();
 		}
 	}
